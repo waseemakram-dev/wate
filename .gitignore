@@ -1,15 +1,42 @@
+# Dependencies
 node_modules/
+
+# Compilation cache & Build outputs
 .wate_cache/
+dist/
+registry_storage/
+wate_packages/
+
+# Binaries & Distribution Assets (uploaded to GitHub Releases)
 *.exe
+*.vsix
+*.wbc
+
+# VS Code Extension build artifacts
+*Content_Types*.xml
+*.vsixmanifest
+
+# Runtime logs and temporary files
 *.log
-*.pdf
-*.xlsx
+*.tmp
+*.map
+tmp_*
+tests/tmp_*
 tests_database.json
+
+# Local test scripts & scratch
+scratch/
 test.wate
 test_web.wate
 test_shake.wate
-tmp_*
-registry_storage/
-dist/
-wate_packages/
-*.vsix
+
+# Generated office & media outputs from test runs
+*.pdf
+*.xlsx
+tests/*.png
+
+# OS & Editor metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
