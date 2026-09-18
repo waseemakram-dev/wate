@@ -1,0 +1,253 @@
+# ============================================================
+# WATE Phase 2: Virtual Machine & Performance Optimization Test Suite
+# Items 13 to 24 Verification
+# ============================================================
+
+out("=== Starting Phase 2 Virtual Machine & Performance Optimization Tests ===")
+
+# ------------------------------------------------------------
+# 1. Bitwise Operations & Opcodes (Item 18)
+# ------------------------------------------------------------
+out("1. Testing Direct Bitwise Operations (&, |, ^, ~, <<, >>, >>>)...")
+set bitAnd = 12 & 10
+set bitOr = 12 | 10
+set bitXor = 12 ^ 10
+set bitNot = ~5
+set bitShl = 1 << 4
+set bitShr = 32 >> 2
+set bitUshr = -1 >>> 28
+
+assert.equal(bitAnd, 8, "Bitwise AND failed")
+assert.equal(bitOr, 14, "Bitwise OR failed")
+assert.equal(bitXor, 6, "Bitwise XOR failed")
+assert.equal(bitNot, -6, "Bitwise NOT failed")
+assert.equal(bitShl, 16, "Bitwise SHL failed")
+assert.equal(bitShr, 8, "Bitwise SHR failed")
+assert.equal(bitUshr, 15, "Bitwise USHR failed")
+out("   ✓ Bitwise operations verified successfully!")
+
+# ------------------------------------------------------------
+# 2. Tail Call Optimization (TCO) (Item 16)
+# ------------------------------------------------------------
+out("2. Testing Tail Call Optimization (TCO) on deep recursion...")
+fn recurseSum(n, acc) {
+    if (n <= 0) {
+        return acc
+    }
+    return recurseSum(n - 1, acc + n)
+}
+
+# 5,000 iterations without Call Stack Overflow
+set tcoResult = recurseSum(5000, 0)
+assert.equal(tcoResult, 12502500, "TCO recursion result failed")
+out("   ✓ TCO deep recursion (5,000 frames) executed without stack overflow!")
+
+# ------------------------------------------------------------
+# 3. Multi-threading Shared Buffers & Atomics (Item 20)
+# ------------------------------------------------------------
+out("3. Testing SharedArrayBuffer and Atomic Operations...")
+set sab = thread.sharedBuffer(1024)
+assert.ok(sab, "SharedArrayBuffer should be created")
+
+set i32View = thread.int32Array(sab)
+thread.atomic.store(i32View, 0, 100)
+set loadedVal = thread.atomic.load(i32View, 0)
+assert.equal(loadedVal, 100, "Atomic store/load failed")
+
+set prevVal = thread.atomic.add(i32View, 0, 50)
+assert.equal(prevVal, 100, "Atomic add previous value mismatch")
+assert.equal(thread.atomic.load(i32View, 0), 150, "Atomic add result mismatch")
+
+set exchanged = thread.atomic.exchange(i32View, 0, 200)
+assert.equal(exchanged, 150, "Atomic exchange failed")
+assert.equal(thread.atomic.load(i32View, 0), 200, "Atomic value after exchange mismatch")
+
+thread.atomic.and(i32View, 0, 255)
+thread.atomic.or(i32View, 0, 1)
+assert.equal(thread.atomic.load(i32View, 0), 201, "Atomic bitwise failed")
+out("   ✓ Multi-threading SharedArrayBuffer and Atomics verified!")
+
+# ------------------------------------------------------------
+# 4. Subsystems Integration Verification via wate-vm
+# ------------------------------------------------------------
+out("4. Testing VM Subsystems Architecture...")
+set vmCore = sys.require("./wate-vm")
+
+# Check all exported components exist
+assert.ok(vmCore.TaggedValue, "TaggedValue component missing")
+assert.ok(vmCore.InlineCache, "InlineCache component missing")
+assert.ok(vmCore.GarbageCollector, "GarbageCollector component missing")
+assert.ok(vmCore.LoopGuard, "LoopGuard component missing")
+assert.ok(vmCore.WateEventLoop, "WateEventLoop component missing")
+assert.ok(vmCore.JITCompiler, "JITCompiler component missing")
+assert.ok(vmCore.VMProfiler, "VMProfiler component missing")
+assert.ok(vmCore.RegisterBytecodeCompiler, "RegisterBytecodeCompiler component missing")
+assert.ok(vmCore.RegisterVM, "RegisterVM component missing")
+assert.ok(vmCore.VirtualMachine, "VirtualMachine component missing")
+out("   ✓ All 10 VM subsystem classes successfully verified!")
+
+# ------------------------------------------------------------
+# 5. Smart Float / Int Tagging (Item 19)
+# ------------------------------------------------------------
+out("5. Testing TaggedValue Fast Smi Arithmetic...")
+set TaggedValue = vmCore.TaggedValue
+assert.equal(TaggedValue.isSmi(42), true, "42 must be Smi")
+assert.equal(TaggedValue.isSmi(3.14159), false, "Float must not be Smi")
+assert.equal(TaggedValue.fastAdd(20, 30), 50, "Fast Smi Add failed")
+assert.equal(TaggedValue.fastSub(100, 45), 55, "Fast Smi Sub failed")
+assert.equal(TaggedValue.fastMul(7, 8), 56, "Fast Smi Mul failed")
+assert.equal(TaggedValue.fastBitAnd(15, 7), 7, "Fast Smi BitAnd failed")
+out("   ✓ TaggedValue Smi fast path verified!")
+
+# ------------------------------------------------------------
+# 6. Inline Caching for Object Properties (Item 14)
+# ------------------------------------------------------------
+out("6. Testing Inline Cache Monomorphic/Polymorphic Property Access...")
+set ic = vmCore.InlineCache()
+set targetObj = { name: "WATE", version: 10, fast: true }
+
+# Warm up monomorphic site
+repeat 5 times {
+    set propVal = ic.getProperty(1, targetObj, "name")
+    assert.equal(propVal, "WATE")
+}
+set stats = ic.getStats()
+assert.ok(stats.hits >= 4, "IC should record at least 4 hits")
+out(f"   ✓ Inline Cache hit rate: {stats.hitRate} ({stats.hits} hits)")
+
+# ------------------------------------------------------------
+# 7. Custom Mark-and-Sweep Garbage Collection (Item 15)
+# ------------------------------------------------------------
+out("7. Testing Garbage Collection mark-and-sweep cycle...")
+set dummyVariables = { map: {} }
+set dummyVM = { globals: {}, variables: { values: fn() { return [] } }, stack: [], registers: [] }
+set gc = vmCore.GarbageCollector(dummyVM)
+
+# Track allocations
+set liveObj = { title: "Preserved Object" }
+gc.track(liveObj)
+
+# Unreachable temporary objects
+repeat 10 times {
+    set tempObj = { junk: "temporary" }
+    gc.track(tempObj)
+}
+
+set preStats = gc.getStats()
+assert.equal(preStats.liveObjects, 11, "Pre-GC live count should be 11")
+
+gc.collect()
+set postStats = gc.getStats()
+assert.equal(postStats.liveObjects, 0, "Post-GC live count should be 0 (unreferenced swept)")
+assert.equal(postStats.freedObjects, 11, "Post-GC freed count should be 11")
+out(f"   ✓ GC mark-and-sweep collected {postStats.freedObjects} unreachable objects!")
+
+# ------------------------------------------------------------
+# 8. CPU Throttling & Infinite Loop Guard (Item 23)
+# ------------------------------------------------------------
+out("8. Testing CPU Throttling & Infinite Loop Guard...")
+set loopGuard = vmCore.LoopGuard(100)
+set loopGuardTriggered = false
+try {
+    repeat 105 times {
+        loopGuard.tick(10, 5) # Target <= IP: backward jump
+    }
+} catch (e) {
+    loopGuardTriggered = true
+}
+assert.ok(loopGuardTriggered, "Infinite Loop Guard must terminate runaway loops")
+out("   ✓ Infinite Loop Guard successfully intercepted runaway loop!")
+
+# ------------------------------------------------------------
+# 9. Memory Limit Sandboxing (Item 22)
+# ------------------------------------------------------------
+out("9. Testing Heap Memory Limit Sandboxing...")
+set pinnedRoots = []
+set sandboxVM = { globals: { pinned: pinnedRoots }, variables: { values: fn() { return [] } }, stack: [], registers: [] }
+# 0.0001 MB = ~100 bytes limit
+set sandboxGC = vmCore.GarbageCollector(sandboxVM, { maxMemoryMB: 0.0001 })
+set oomTriggered = false
+try {
+    repeat 200 times {
+        set chunk = { bigData: "memory payload string to exceed sandbox quota" }
+        list.push(pinnedRoots, chunk)
+        sandboxGC.track(chunk)
+    }
+} catch (e) {
+    oomTriggered = true
+}
+assert.ok(oomTriggered, "Heap memory quota limit must trigger OutOfMemoryError")
+out("   ✓ Memory Limit Sandboxing successfully enforced heap ceiling!")
+
+# ------------------------------------------------------------
+# 10. Asynchronous Event Loop Core (Item 21)
+# ------------------------------------------------------------
+out("10. Testing Asynchronous Event Loop (Microtask & Macrotask queues)...")
+set evLoop = vmCore.WateEventLoop()
+set taskLog = []
+
+evLoop.enqueueTask(fn() {
+    list.push(taskLog, "macrotask")
+}, 0)
+
+evLoop.enqueueMicrotask(fn() {
+    list.push(taskLog, "microtask")
+})
+
+evLoop.tick()
+assert.equal(taskLog[0], "microtask", "Microtask should execute before macrotask")
+assert.equal(taskLog[1], "macrotask", "Macrotask should execute after microtask")
+out("   ✓ Event Loop priority execution verified!")
+
+# ------------------------------------------------------------
+# 11. Register VM 3-Address Instruction Execution (Item 13)
+# ------------------------------------------------------------
+out("11. Testing Register-Based VM Instruction Execution...")
+set regCompiler = vmCore.RegisterBytecodeCompiler()
+set parser = sys.require("./wate-parser")
+set testAst = parser.parseWate("set x = 20; set y = 30; set z = x * y + 5;", "test.wate")
+regCompiler.compile(testAst)
+
+set regVM = vmCore.RegisterVM(regCompiler.instructions, {})
+regVM.run()
+assert.equal(regVM.variables.get("z"), 605, "Register VM computation failed")
+out("   ✓ Register VM computed 3-address instructions successfully (z = 605)!")
+
+# ------------------------------------------------------------
+# 12. JIT Native Code Generation & Profiler (Items 17 & 24)
+# ------------------------------------------------------------
+out("12. Testing JIT Compilation & VM Profiler...")
+set jitFn = {
+    type: "VM_FUNCTION",
+    name: "hotMath",
+    params: ["n"],
+    isRegister: true,
+    instructions: [
+        { op: "LOAD_VAR_R", dst: 1, name: "n" },
+        { op: "LOAD_CONST_R", dst: 2, value: 2 },
+        { op: "BINARY_OP_R", dst: 0, left: 1, right: 2, operator: "*" },
+        { op: "RETURN_R", src: 0 }
+    ]
+}
+
+set jitCompiler = vmCore.JITCompiler(null, 5)
+repeat 6 times {
+    jitCompiler.compile(jitFn)
+}
+assert.ok(jitFn.nativeCode, "Hot function should be JIT compiled to native code")
+set nativeRes = jitFn.nativeCode([25], {}, {}, { get: fn() { return null } })
+assert.equal(nativeRes, 50, "JIT compiled native function result mismatch")
+out("   ✓ JIT prototype successfully compiled hot function into native code!")
+
+set profiler = vmCore.VMProfiler()
+profiler.start()
+repeat 100 times {
+    profiler.recordOpcode("BINARY_OP_R", 500)
+}
+profiler.stop()
+assert.ok(profiler.totalInstructions is 100, "Profiler instruction count mismatch")
+out(f"   ✓ VM Profiler successfully tracked {profiler.totalInstructions} retired instructions!")
+
+out("\n======================================================================")
+out("🏆 All 12 Phase 2 Virtual Machine & Optimization Features PASSED!")
+out("======================================================================")

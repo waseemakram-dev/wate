@@ -2,15 +2,56 @@
   "name": "wate-lang",
   "displayName": "WATE Language Support",
   "description": "Syntax highlighting, snippets, and language support for WATE",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "engines": {
     "vscode": "^1.75.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Debuggers"
   ],
   "publisher": "WazemTech",
   "contributes": {
+    "breakpoints": [
+      {
+        "language": "wate"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "wate",
+        "label": "WATE Debugger",
+        "program": "./wate-debug-adapter.js",
+        "runtime": "node",
+        "languages": ["wate"],
+        "configurationAttributes": {
+          "launch": {
+            "required": ["program"],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Path to the .wate file to debug",
+                "default": "${file}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch",
+                "default": true
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "wate",
+            "name": "Debug WATE File",
+            "request": "launch",
+            "program": "${file}",
+            "stopOnEntry": true
+          }
+        ]
+      }
+    ],
     "languages": [
       {
         "id": "wate",

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WATE Project Documentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --bg-surface: #0f172a;
+      --bg-card: #131d35;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --accent-green: #10b981;
+      --code-bg: #070a12;
+      --font: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --mono: 'Fira Code', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    /* Sidebar */
+    .sidebar {
+      width: 290px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .sidebar-header {
+      padding: 1.25rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, var(--accent), var(--accent-purple));
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .sidebar-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .search-box {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .search-box input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-family: var(--font);
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 0.5rem;
+    }
+    .nav-group-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0.75rem 0.25rem;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+    .nav-item:hover {
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+    }
+    .badge-tag {
+      font-size: 0.65rem;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: var(--mono);
+      font-weight: 600;
+    }
+    .tag-fn { background: rgba(6, 182, 212, 0.15); color: var(--accent); }
+    .tag-class { background: rgba(139, 92, 246, 0.15); color: var(--accent-purple); }
+    .tag-interface { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+
+    /* Main Content */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2.5rem 3rem;
+    }
+    .content-header {
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+    }
+    .content-header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+    .content-header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Cards */
+    .doc-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      scroll-margin-top: 2rem;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .signature {
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .signature .kw { color: var(--accent); }
+    .signature .fn-name { color: #facc15; }
+    .signature .class-name { color: #a78bfa; }
+    .description {
+      color: #cbd5e1;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    /* Parameter Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.88rem;
+    }
+    th {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    code {
+      font-family: var(--mono);
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      color: var(--accent);
+    }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      overflow-x: auto;
+      color: #e2e8f0;
+      margin: 0.75rem 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Left Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo-badge">⚡</div>
+      <div>
+        <h2>WATE Project Documentation</h2>
+      </div>
+    </div>
+    <div class="search-box">
+      <input id="searchInput" type="text" placeholder="Search symbols..." autocomplete="off">
+    </div>
+    <nav id="sidebarNav" class="sidebar-nav">
+<div class="nav-group-title">📄 automation.wate</div>
+<a class="nav-item" href="#fn-scrapeTitle" data-name="scrapetitle"><span class="badge-tag tag-fn">FN</span> scrapeTitle()</a>
+<div class="nav-group-title">📄 database.wate</div>
+<div class="nav-group-title">📄 hello.wate</div>
+<div class="nav-group-title">📄 npm_bridge.wate</div>
+<div class="nav-group-title">📄 scheduler.wate</div>
+<div class="nav-group-title">📄 server.wate</div>
+<div class="nav-group-title">📄 test.wate</div>
+<a class="nav-item" href="#class-Animal" data-name="animal"><span class="badge-tag tag-class">CLASS</span> Animal</a>
+<a class="nav-item" href="#class-Dog" data-name="dog"><span class="badge-tag tag-class">CLASS</span> Dog</a>
+<a class="nav-item" href="#iface-Printable" data-name="printable"><span class="badge-tag tag-interface">IFACE</span> Printable</a>
+<a class="nav-item" href="#fn-printDetails" data-name="printdetails"><span class="badge-tag tag-fn">FN</span> printDetails()</a>
+<div class="nav-group-title">📄 01_variables.wate</div>
+<div class="nav-group-title">📄 02_control_flow.wate</div>
+<a class="nav-item" href="#fn-testGuard" data-name="testguard"><span class="badge-tag tag-fn">FN</span> testGuard()</a>
+<div class="nav-group-title">📄 03_loops.wate</div>
+<div class="nav-group-title">📄 04_functions.wate</div>
+<a class="nav-item" href="#fn-add" data-name="add"><span class="badge-tag tag-fn">FN</span> add()</a>
+<div class="nav-group-title">📄 05_oop.wate</div>
+<a class="nav-item" href="#class-Base" data-name="base"><span class="badge-tag tag-class">CLASS</span> Base</a>
+<a class="nav-item" href="#class-Derived" data-name="derived"><span class="badge-tag tag-class">CLASS</span> Derived</a>
+<a class="nav-item" href="#fn-display" data-name="display"><span class="badge-tag tag-fn">FN</span> display()</a>
+<div class="nav-group-title">📄 06_interfaces.wate</div>
+<a class="nav-item" href="#class-ConsoleLogger" data-name="consolelogger"><span class="badge-tag tag-class">CLASS</span> ConsoleLogger</a>
+<a class="nav-item" href="#iface-Logger" data-name="logger"><span class="badge-tag tag-interface">IFACE</span> Logger</a>
+<a class="nav-item" href="#fn-logMessage" data-name="logmessage"><span class="badge-tag tag-fn">FN</span> logMessage()</a>
+<div class="nav-group-title">📄 07_advanced_syntax.wate</div>
+<a class="nav-item" href="#fn-fetchLocal" data-name="fetchlocal"><span class="badge-tag tag-fn">FN</span> fetchLocal()</a>
+<a class="nav-item" href="#fn-runAsync" data-name="runasync"><span class="badge-tag tag-fn">FN</span> runAsync()</a>
+<div class="nav-group-title">📄 08_package_integration.wate</div>
+<div class="nav-group-title">📄 09_database_integration.wate</div>
+<div class="nav-group-title">📄 10_bot_automation.wate</div>
+<a class="nav-item" href="#fn-runAutomation" data-name="runautomation"><span class="badge-tag tag-fn">FN</span> runAutomation()</a>
+<div class="nav-group-title">📄 11_scheduler.wate</div>
+<a class="nav-item" href="#fn-runScheduler" data-name="runscheduler"><span class="badge-tag tag-fn">FN</span> runScheduler()</a>
+<div class="nav-group-title">📄 12_office_media_integration.wate</div>
+<div class="nav-group-title">📄 12_worker_main.wate</div>
+<div class="nav-group-title">📄 12_worker_thread.wate</div>
+<div class="nav-group-title">📄 13_scope_resolver.wate</div>
+<div class="nav-group-title">📄 15_type_inference.wate</div>
+<div class="nav-group-title">📄 16_bytecode_vm.wate</div>
+<div class="nav-group-title">📄 17_sandbox_permissions.wate</div>
+<div class="nav-group-title">📄 18_source_maps.wate</div>
+<div class="nav-group-title">📄 19_tree_shaking.wate</div>
+<a class="nav-item" href="#fn-unusedHelperFunction" data-name="unusedhelperfunction"><span class="badge-tag tag-fn">FN</span> unusedHelperFunction()</a>
+<a class="nav-item" href="#fn-activeHelperFunction" data-name="activehelperfunction"><span class="badge-tag tag-fn">FN</span> activeHelperFunction()</a>
+<div class="nav-group-title">📄 20_hot_reload.wate</div>
+<div class="nav-group-title">📄 tmp_cache.wate</div>
+<div class="nav-group-title">📄 tmp_map.wate</div>
+<div class="nav-group-title">📄 tmp_sandbox.wate</div>
+<div class="nav-group-title">📄 tmp_scope.wate</div>
+<div class="nav-group-title">📄 tmp_shake.wate</div>
+<a class="nav-item" href="#fn-unused" data-name="unused"><span class="badge-tag tag-fn">FN</span> unused()</a>
+<div class="nav-group-title">📄 tmp_type.wate</div>
+<div class="nav-group-title">📄 tmp_vm.wate</div>
+<div class="nav-group-title">📄 wate_master_test.wate</div>
+<div class="nav-group-title">📄 test_shake.wate</div>
+<a class="nav-item" href="#fn-unused" data-name="unused"><span class="badge-tag tag-fn">FN</span> unused()</a>
+<div class="nav-group-title">📄 test_web.wate</div>
+    </nav>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="content">
+    <div class="content-header">
+      <h1>WATE Project Documentation</h1>
+      <p>Automated API Reference Documentation generated for WATE programming language.</p>
+    </div>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: automation.wate</h2>
+
+        <article id="fn-scrapeTitle" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">async </span><span class="kw">fn</span> <span class="fn-name">scrapeTitle</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: database.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: hello.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: npm_bridge.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: scheduler.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: server.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: test.wate</h2>
+
+        <article id="iface-Printable" class="doc-card">
+          <div class="card-header">
+            <div class="signature"><span class="kw">interface</span> <span class="class-name">Printable</span></div>
+            <span class="badge-tag tag-interface">INTERFACE</span>
+          </div>
+          
+          <div style="font-weight:600; font-size:0.85rem; color:#94a3b8; margin-top:0.75rem;">Required Interface Methods:</div>
+          <ul style="margin: 0.5rem 1.5rem; font-size:0.9rem;">
+            <li><code>method printDetails</code></li>
+          </ul>
+        </article>
+        
+        <article id="class-Animal" class="doc-card">
+          <div class="card-header">
+            <div class="signature"><span class="kw">class</span> <span class="class-name">Animal</span></div>
+            <span class="badge-tag tag-class">CLASS</span>
+          </div>
+          
+          
+          
+        </article>
+        
+        <article id="class-Dog" class="doc-card">
+          <div class="card-header">
+            <div class="signature"><span class="kw">class</span> <span class="class-name">Dog</span> <span class="kw">extends</span> Animal <span class="kw">implements</span> Printable</div>
+            <span class="badge-tag tag-class">CLASS</span>
+          </div>
+          
+          
+          
+        </article>
+        
+        <article id="fn-printDetails" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">printDetails</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 01_variables.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 02_control_flow.wate</h2>
+
+        <article id="fn-testGuard" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">testGuard</span>(score)
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+            <table>
+              <thead>
+                <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>score</code></td><td><code>-</code></td><td>-</td></tr>
+              </tbody>
+            </table>
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 03_loops.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 04_functions.wate</h2>
+
+        <article id="fn-add" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">add</span>(a, b)
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          <div class="description">1. Named Function Definition</div>
+          
+            <table>
+              <thead>
+                <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>a</code></td><td><code>-</code></td><td>-</td></tr><tr><td><code>b</code></td><td><code>-</code></td><td>-</td></tr>
+              </tbody>
+            </table>
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 05_oop.wate</h2>
+
+        <article id="class-Base" class="doc-card">
+          <div class="card-header">
+            <div class="signature"><span class="kw">class</span> <span class="class-name">Base</span></div>
+            <span class="badge-tag tag-class">CLASS</span>
+          </div>
+          
+          
+          
+        </article>
+        
+        <article id="class-Derived" class="doc-card">
+          <div class="card-header">
+            <div class="signature"><span class="kw">class</span> <span class="class-name">Derived</span> <span class="kw">extends</span> Base</div>
+            <span class="badge-tag tag-class">CLASS</span>
+          </div>
+          
+          
+          
+        </article>
+        
+        <article id="fn-display" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">display</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 06_interfaces.wate</h2>
+
+        <article id="iface-Logger" class="doc-card">
+          <div class="card-header">
+            <div class="signature"><span class="kw">interface</span> <span class="class-name">Logger</span></div>
+            <span class="badge-tag tag-interface">INTERFACE</span>
+          </div>
+          
+          <div style="font-weight:600; font-size:0.85rem; color:#94a3b8; margin-top:0.75rem;">Required Interface Methods:</div>
+          <ul style="margin: 0.5rem 1.5rem; font-size:0.9rem;">
+            <li><code>method logMessage</code></li>
+          </ul>
+        </article>
+        
+        <article id="class-ConsoleLogger" class="doc-card">
+          <div class="card-header">
+            <div class="signature"><span class="kw">class</span> <span class="class-name">ConsoleLogger</span> <span class="kw">implements</span> Logger</div>
+            <span class="badge-tag tag-class">CLASS</span>
+          </div>
+          
+          
+          
+            <div style="font-weight:600; font-size:0.85rem; color:#94a3b8; margin-top:1rem;">Methods:</div>
+            
+              <div style="margin-top:0.75rem; padding:0.75rem; background:rgba(0,0,0,0.2); border-radius:6px;">
+                <div style="font-family:var(--mono); font-size:0.9rem; color:#facc15;">
+                  logMessage(msg)
+                </div>
+                
+              </div>
+            
+          
+        </article>
+        
+        <article id="fn-logMessage" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">logMessage</span>(msg)
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+            <table>
+              <thead>
+                <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>msg</code></td><td><code>-</code></td><td>-</td></tr>
+              </tbody>
+            </table>
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 07_advanced_syntax.wate</h2>
+
+        <article id="fn-fetchLocal" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">async </span><span class="kw">fn</span> <span class="fn-name">fetchLocal</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          <div class="description">4. Async / Await compilation</div>
+          
+          
+        </article>
+        
+        <article id="fn-runAsync" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">async </span><span class="kw">fn</span> <span class="fn-name">runAsync</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 08_package_integration.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 09_database_integration.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 10_bot_automation.wate</h2>
+
+        <article id="fn-runAutomation" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">async </span><span class="kw">fn</span> <span class="fn-name">runAutomation</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 11_scheduler.wate</h2>
+
+        <article id="fn-runScheduler" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">async </span><span class="kw">fn</span> <span class="fn-name">runScheduler</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 12_office_media_integration.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 12_worker_main.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 12_worker_thread.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 13_scope_resolver.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 15_type_inference.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 16_bytecode_vm.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 17_sandbox_permissions.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 18_source_maps.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 19_tree_shaking.wate</h2>
+
+        <article id="fn-unusedHelperFunction" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">unusedHelperFunction</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        
+        <article id="fn-activeHelperFunction" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">activeHelperFunction</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: 20_hot_reload.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: tmp_cache.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: tmp_map.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: tmp_sandbox.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: tmp_scope.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: tmp_shake.wate</h2>
+
+        <article id="fn-unused" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">unused</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: tmp_type.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: tmp_vm.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: wate_master_test.wate</h2>
+<h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: test_shake.wate</h2>
+
+        <article id="fn-unused" class="doc-card">
+          <div class="card-header">
+            <div class="signature">
+              <span class="kw">fn</span> <span class="fn-name">unused</span>()
+            </div>
+            <span class="badge-tag tag-fn">FUNCTION</span>
+          </div>
+          
+          
+          
+        </article>
+        <h2 style="margin: 2rem 0 1rem; color: #94a3b8; font-size: 1.1rem;">File: test_web.wate</h2>
+
+  </main>
+
+  <script>
+    // Live Search Filter
+    const searchInput = document.getElementById('searchInput');
+    const navItems = document.querySelectorAll('.nav-item');
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      navItems.forEach(item => {
+        const name = item.getAttribute('data-name') || '';
+        item.style.display = (!q || name.includes(q)) ? 'flex' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

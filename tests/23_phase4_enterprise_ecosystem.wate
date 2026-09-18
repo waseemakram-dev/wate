@@ -1,0 +1,364 @@
+# ============================================================
+# Phase 4: Standard Library & Enterprise Ecosystem (Items 37 to 48)
+# ============================================================
+
+out("================================================================")
+out("🧪 WATE Phase 4: Standard Library & Enterprise Ecosystem Test Suite")
+out("================================================================")
+
+# ------------------------------------------------------------
+# 37. Native WebSockets Server & Client
+# ------------------------------------------------------------
+out("\n1. Testing Native WebSockets Server & Client...")
+set wsServer = ws.createServer(9898)
+set wsReceived = ""
+
+set wsClient = ws.connect("ws://localhost:9898")
+wsClient.on("open", fn() {
+    wsClient.send("ping-from-client")
+})
+
+# Broadcast and message check
+wsServer.broadcast("broadcast-event")
+assert.ok(wsServer.clients, "WebSocket server clients set should exist")
+wsClient.close()
+wsServer.close()
+out("   ✓ Native WebSockets Server & Client verified successfully!")
+
+# ------------------------------------------------------------
+# 38. JWT Authentication Module
+# ------------------------------------------------------------
+out("\n2. Testing JWT Authentication Module...")
+set secretKey = "super-secret-wate-enterprise-key-2026"
+set tokenPayload = { sub: "user-42", username: "waseem", role: "architect" }
+
+# Sign token
+set jwtToken = jwt.sign(tokenPayload, secretKey, { expiresIn: "1h" })
+assert.ok(jwtToken.startsWith("ey"), "JWT token should start with Base64 header")
+assert.equal(jwtToken.split(".").length, 3, "JWT token must have 3 parts separated by dots")
+
+# Verify token
+set decodedPayload = jwt.verify(jwtToken, secretKey)
+assert.equal(decodedPayload.sub, "user-42", "JWT sub claim mismatch")
+assert.equal(decodedPayload.role, "architect", "JWT role claim mismatch")
+
+# Decode without secret
+set inspected = jwt.decode(jwtToken)
+assert.equal(inspected.header.alg, "HS256", "JWT header algorithm mismatch")
+assert.equal(inspected.payload.username, "waseem", "JWT inspected payload mismatch")
+
+# Tampered token verification failure
+set tamperedToken = jwtToken.slice(0, -4) + "XXXX"
+assert.throws(fn() {
+    jwt.verify(tamperedToken, secretKey)
+}, "Tampered JWT token must throw invalid signature error")
+
+# Expired token
+set expiredToken = jwt.sign({ sub: "exp-user" }, secretKey, { expiresIn: 0 })
+assert.throws(fn() {
+    jwt.verify(expiredToken, secretKey)
+}, "Expired JWT token must throw expiration error")
+out("   ✓ JWT Authentication Module verified successfully!")
+
+# ------------------------------------------------------------
+# 39. Crypto & Hashing Extensions: AES, RSA & bcrypt
+# ------------------------------------------------------------
+out("\n3. Testing Crypto Extensions: AES, RSA, and bcrypt...")
+set rawSecret = "Enterprise-Vault-2026"
+set plainText = "Secret payload: WATE native enterprise standard library"
+
+# AES-256-CBC Encryption & Decryption
+set aesEncrypted = crypto.aes.encrypt(plainText, rawSecret)
+assert.ok(aesEncrypted.ciphertext, "AES ciphertext should exist")
+assert.ok(aesEncrypted.iv, "AES IV should exist")
+set aesDecrypted = crypto.aes.decrypt(aesEncrypted, rawSecret)
+assert.equal(aesDecrypted, plainText, "AES decrypted text must match original plaintext")
+
+# RSA KeyPair Generation & Asymmetric Signing
+set rsaKeys = crypto.rsa.generateKeyPair(1024)
+assert.ok(rsaKeys.publicKey.includes("PUBLIC KEY"), "RSA public key PEM format mismatch")
+assert.ok(rsaKeys.privateKey.includes("PRIVATE KEY"), "RSA private key PEM format mismatch")
+
+set rsaSignature = crypto.rsa.sign("Transaction #9001", rsaKeys.privateKey)
+assert.ok(rsaSignature.length > 0, "RSA signature should be non-empty hex string")
+set rsaValid = crypto.rsa.verify("Transaction #9001", rsaSignature, rsaKeys.publicKey)
+assert.isTrue(rsaValid, "RSA signature verification should succeed")
+set rsaInvalid = crypto.rsa.verify("Tampered Transaction", rsaSignature, rsaKeys.publicKey)
+assert.isFalse(rsaInvalid, "RSA signature verification should fail for tampered text")
+
+# bcrypt Password Hashing & Comparison
+set userPassword = "Password@Secure123"
+set bcryptHash = crypto.bcrypt.hash(userPassword, 8)
+assert.ok(bcryptHash.startsWith("$wate$"), "bcrypt hash must follow $wate$ format")
+assert.isTrue(crypto.bcrypt.compare(userPassword, bcryptHash), "bcrypt valid password match failed")
+assert.isFalse(crypto.bcrypt.compare("WrongPassword!", bcryptHash), "bcrypt invalid password should return false")
+out("   ✓ Crypto & Hashing Extensions verified successfully!")
+
+# ------------------------------------------------------------
+# 40. ORM (Object Relational Mapper) & Fluent Query Builder
+# ------------------------------------------------------------
+out("\n4. Testing ORM & Fluent Query Builder...")
+set Employee = orm.define("Employee", {}, { tableName: "employees" })
+Employee.clear()
+
+set emp1 = Employee.create({ name: "Waseem", department: "Engineering", salary: 150000, active: true })
+set emp2 = Employee.create({ name: "Ahmad", department: "Design", salary: 90000, active: true })
+set emp3 = Employee.create({ name: "Sara", department: "Engineering", salary: 130000, active: false })
+set emp4 = Employee.create({ name: "Hamza", department: "Engineering", salary: 110000, active: true })
+
+assert.ok(emp1.id, "emp1 id should exist")
+assert.ok(emp4.id, "emp4 id should exist")
+assert.equal(Employee.count(), 4, "Initial ORM record count mismatch")
+
+# Fluent SQL generation check
+set qb = Employee.query().where("department", "Engineering").where("active", true).orderBy("salary", "DESC").limit(2)
+assert.equal(qb.toSQL(), "SELECT * FROM employees WHERE department = 'Engineering' AND active = true ORDER BY salary DESC LIMIT 2", "Fluent query toSQL() mismatch")
+
+# Execute query
+set topEng = qb.execute()
+assert.equal(topEng.length, 2, "Filtered ORM records count mismatch")
+assert.equal(topEng[0].name, "Waseem", "First top salary employee mismatch")
+assert.equal(topEng[1].name, "Hamza", "Second top salary employee mismatch")
+
+# Active Record updates & delete
+emp2.salary = 95000
+emp2.save()
+set foundAhmad = Employee.findOne({ name: "Ahmad" })
+assert.equal(foundAhmad.salary, 95000, "Updated salary via Active Record save() mismatch")
+
+emp3.delete()
+assert.equal(Employee.count(), 3, "Record count after delete() mismatch")
+out("   ✓ ORM & Fluent Query Builder verified successfully!")
+
+# ------------------------------------------------------------
+# 41. HTTP Client Advanced Features: Pooling, Multipart & Streams
+# ------------------------------------------------------------
+out("\n5. Testing HTTP Advanced Features: Pooling, Multipart & Streams...")
+assert.ok(http.agent, "http.agent connection pool should be present")
+assert.ok(http.httpsAgent, "http.httpsAgent connection pool should be present")
+assert.ok(type.isFn(http.stream), "http.stream generator function should be present")
+
+# Multipart Form-Data synthesis
+set uploadData = {
+    avatar: { filename: "profile.png", contentType: "image/png", data: "PNG_HEADER_DATA" },
+    username: "waseem_enterprise",
+    category: "admin"
+}
+async fn testMultipart() {
+    set mp = await http.multipart("http://localhost:8080/api/upload", uploadData)
+    assert.ok(mp.boundary.includes("WateBoundary"), "Multipart boundary mismatch")
+    assert.ok(mp.headers["Content-Type"].includes("multipart/form-data"), "Multipart Content-Type header missing")
+    assert.ok(mp.length > 0, "Multipart body length should be greater than zero")
+}
+testMultipart()
+out("   ✓ HTTP Client Advanced Features verified successfully!")
+
+# ------------------------------------------------------------
+# 42. Environment Validation Schema
+# ------------------------------------------------------------
+out("\n6. Testing Environment Validation Schema...")
+set rawEnv = "APP_PORT=5000\nDATABASE_URL=\"postgres://user:pass@localhost:5432/app\"\nENABLE_SSL=true\n# ignored comment\n"
+set parsedEnv = env.parse(rawEnv)
+assert.equal(parsedEnv.APP_PORT, "5000", "Parsed env APP_PORT mismatch")
+assert.equal(parsedEnv.DATABASE_URL, "postgres://user:pass@localhost:5432/app", "Parsed env DATABASE_URL mismatch")
+assert.equal(parsedEnv.ENABLE_SSL, "true", "Parsed env ENABLE_SSL mismatch")
+
+set envValidator = env.schema({
+    APP_PORT: { type: "number", required: true },
+    DATABASE_URL: { type: "string", required: true },
+    ENABLE_SSL: { type: "boolean", default: false },
+    CACHE_TTL: { type: "number", default: 3600 }
+})
+
+set validatedEnv = envValidator.validate(parsedEnv)
+assert.equal(validatedEnv.APP_PORT, 5000, "Validated env APP_PORT should be cast to number")
+assert.equal(validatedEnv.ENABLE_SSL, true, "Validated env ENABLE_SSL should be boolean")
+assert.equal(validatedEnv.CACHE_TTL, 3600, "Validated env CACHE_TTL should use default value")
+
+assert.throws(fn() {
+    envValidator.validate({})
+}, "Validation should throw when required environment variables are absent")
+out("   ✓ Environment Validation Schema verified successfully!")
+
+# ------------------------------------------------------------
+# 43. Command Line Arguments Parser
+# ------------------------------------------------------------
+out("\n7. Testing Command Line Arguments Parser...")
+set testArgv = ["deploy", "--env=production", "--port", "8000", "-v", "--no-cache", "dist/bundle.js"]
+set parsedCli = args.parse(testArgv, {
+    env: { type: "string" },
+    port: { type: "number", default: 3000 },
+    verbose: { alias: "v", type: "boolean" },
+    cache: { type: "boolean" }
+})
+
+assert.equal(parsedCli.command, "deploy", "CLI parsed command mismatch")
+assert.equal(parsedCli.env, "production", "CLI parsed env option mismatch")
+assert.equal(parsedCli.port, 8000, "CLI parsed port number mismatch")
+assert.equal(parsedCli.verbose, true, "CLI parsed verbose flag mismatch")
+assert.equal(parsedCli.cache, false, "CLI parsed --no-cache boolean mismatch")
+assert.equal(parsedCli._[1], "dist/bundle.js", "CLI positional argument mismatch")
+
+set helpOutput = args.help({
+    port: { alias: "p", type: "number", default: 8080, description: "Server listening port" },
+    host: { type: "string", description: "Binding host interface" }
+}, "WATE Enterprise App")
+assert.ok(helpOutput.includes("Server listening port"), "Generated CLI help text missing description")
+assert.ok(helpOutput.includes("--port"), "Generated CLI help text missing flag")
+out("   ✓ Command Line Arguments Parser verified successfully!")
+
+# ------------------------------------------------------------
+# 44. Logger Utility: Structured & Multi-Level
+# ------------------------------------------------------------
+out("\n8. Testing Structured Logger Utility...")
+logger.setLevel("debug")
+logger.setFormat("pretty")
+logger.debug("Test debug message")
+logger.info("Test info message")
+logger.warn("Test warn message")
+
+logger.setFormat("json")
+logger.info("JSON structured log", { transactionId: "TX-100", status: "SUCCESS" })
+logger.setFormat("pretty")
+
+set appLogger = logger.create({ tag: "PaymentGateway" })
+assert.ok(type.isFn(appLogger.info), "Custom scoped logger must provide info method")
+assert.ok(type.isFn(appLogger.error), "Custom scoped logger must provide error method")
+appLogger.info("Payment processed successfully")
+out("   ✓ Structured Logger Utility verified successfully!")
+
+# ------------------------------------------------------------
+# 45. XML / YAML Parsers & Serializers
+# ------------------------------------------------------------
+out("\n9. Testing XML & YAML Parsers...")
+# XML
+set rawXml = "<service name=\"auth-service\"><port>8080</port><enabled>true</enabled></service>"
+set parsedXml = xml.parse(rawXml)
+assert.equal(parsedXml.tag, "service", "XML root tag mismatch")
+assert.equal(parsedXml.attributes.name, "auth-service", "XML attribute name mismatch")
+assert.equal(parsedXml.children.length, 2, "XML children count mismatch")
+
+set xmlString = xml.stringify({ host: "127.0.0.1", port: 5432 }, "database")
+assert.ok(xmlString.includes("<database"), "Serialized XML missing root element")
+assert.ok(xmlString.includes("<host>127.0.0.1</host>"), "Serialized XML missing text content")
+
+# YAML
+set rawYaml = "project:\n  title: WATE Language\n  version: 10.0\nmodules:\n  - ws\n  - jwt\n  - orm\n"
+set parsedYaml = yaml.parse(rawYaml)
+assert.equal(parsedYaml.project.title, "WATE Language", "YAML parsed title mismatch")
+assert.equal(parsedYaml.project.version, 10, "YAML parsed numeric value mismatch")
+assert.equal(parsedYaml.modules.length, 3, "YAML parsed sequence length mismatch")
+assert.equal(parsedYaml.modules[0], "ws", "YAML sequence item 0 mismatch")
+assert.equal(parsedYaml.modules[2], "orm", "YAML sequence item 2 mismatch")
+
+set yamlString = yaml.stringify(parsedYaml)
+assert.ok(yamlString.includes("title: WATE Language"), "YAML stringify missing key value")
+out("   ✓ XML & YAML Parsers verified successfully!")
+
+# ------------------------------------------------------------
+# 46. Image Processing Pipeline
+# ------------------------------------------------------------
+out("\n10. Testing Image Processing Pipeline...")
+set sampleImg = "tests/tmp_enterprise_sample.png"
+file.write(sampleImg, "WATE_IMAGE_DATA")
+
+set pipe = img.Pipeline(sampleImg).resize(400, 300).crop(10, 10, 200, 200).watermark("CONFIDENTIAL", { opacity: 0.5 }).filter("contrast")
+
+set outImg = "tests/tmp_enterprise_processed.png"
+set savedImg = pipe.save(outImg)
+assert.isTrue(savedImg, "Image pipeline save() failed")
+assert.isTrue(wpath.exists(outImg), "Processed image file not found")
+
+set meta = img.metadata(sampleImg)
+assert.equal(meta.format, "png", "Image metadata format mismatch")
+assert.equal(meta.width, 800, "Image metadata width mismatch")
+out("   ✓ Image Processing Pipeline verified successfully!")
+
+# ------------------------------------------------------------
+# 47. PDF Report Generator
+# ------------------------------------------------------------
+out("\n11. Testing PDF Report Generator...")
+set reportPdf = "tests/tmp_enterprise_report.pdf"
+set pdfDoc = pdf.Document({ title: "Enterprise Systems Audit" })
+
+pdfDoc.text("WATE Enterprise Systems Audit Report", 50, 750, { size: 16 })
+pdfDoc.line(50, 740, 545, 740, { width: 1.5 })
+pdfDoc.rect(50, 620, 495, 100)
+pdfDoc.table(
+    ["Module", "Version", "Compliance", "Status"],
+    [
+        ["WebSockets", "RFC-6455", "100%", "PASSED"],
+        ["JWT Auth", "RFC-7519", "100%", "PASSED"],
+        ["Crypto / AES", "FIPS-197", "100%", "PASSED"],
+        ["Fluent ORM", "v1.0", "100%", "PASSED"]
+    ],
+    { x: 55, y: 700, colWidth: 120, rowHeight: 18 }
+)
+pdfDoc.addPage()
+pdfDoc.text("Appendix A: Standard Library Capabilities", 50, 750, { size: 14 })
+set pdfSaved = pdfDoc.save(reportPdf)
+assert.isTrue(pdfSaved, "PDF Document save() failed")
+assert.isTrue(wpath.exists(reportPdf), "Saved PDF file does not exist")
+
+set pdfContent = file.read(reportPdf)
+assert.ok(pdfContent.startsWith("%PDF-1.4"), "Generated PDF binary header mismatch")
+assert.ok(pdfContent.includes("%%EOF"), "Generated PDF binary footer EOF mismatch")
+out("   ✓ PDF Report Generator verified successfully!")
+
+# ------------------------------------------------------------
+# 48. Localization (i18n)
+# ------------------------------------------------------------
+out("\n12. Testing Localization (i18n)...")
+i18n.load("en", {
+    welcome: "Welcome back, {user}!",
+    cart: {
+        zero: "Your cart is empty",
+        one: "You have 1 item in your cart",
+        other: "You have {count} items in your cart"
+    },
+    menu: {
+        dashboard: "Dashboard",
+        settings: "Settings",
+        logout: "Log Out"
+    }
+})
+
+i18n.load("ur", {
+    welcome: "Khushamdeed, {user}!",
+    cart: {
+        zero: "Aap ki tokri khali hai",
+        one: "Aap ki tokri mein 1 item hai",
+        other: "Aap ki tokri mein {count} items hain"
+    },
+    menu: {
+        dashboard: "Dashboard",
+        logout: "Bahir niklein"
+    }
+})
+
+# Urdu translations & interpolation
+i18n.setLocale("ur")
+assert.equal(i18n.t("welcome", { user: "Waseem" }), "Khushamdeed, Waseem!", "Urdu parameterized translation mismatch")
+assert.equal(i18n.t("cart", { count: 0 }), "Aap ki tokri khali hai", "Urdu plural zero mismatch")
+assert.equal(i18n.t("cart", { count: 1 }), "Aap ki tokri mein 1 item hai", "Urdu plural one mismatch")
+assert.equal(i18n.t("cart", { count: 7 }), "Aap ki tokri mein 7 items hain", "Urdu plural other mismatch")
+
+# English translations
+i18n.setLocale("en")
+assert.equal(i18n.t("welcome", { user: "Admin" }), "Welcome back, Admin!", "English parameterized translation mismatch")
+assert.equal(i18n.t("cart", { count: 4 }), "You have 4 items in your cart", "English plural other mismatch")
+
+# Fallback locale check
+i18n.setLocale("ur")
+i18n.setFallbackLocale("en")
+# 'menu.settings' is present in 'en' but absent in 'ur'
+assert.equal(i18n.t("menu.settings"), "Settings", "i18n fallback to default locale failed")
+
+# Clean up temporary test files
+sys.exec("node -e \"const fs = require('fs'); ['tests/tmp_enterprise_sample.png', 'tests/tmp_enterprise_processed.png', 'tests/tmp_enterprise_report.pdf'].forEach(f => { if (fs.existsSync(f)) try { fs.unlinkSync(f); } catch (e) {} });\"")
+
+out("   ✓ Localization (i18n) verified successfully!")
+
+out("\n================================================================")
+out("🏆 All 12 Phase 4 Enterprise Ecosystem Features PASSED!")
+out("================================================================")

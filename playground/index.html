@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ WATE Web Playground & Online REPL</title>
+  <meta name="description" content="Interactive browser playground for WATE Programming Language. Write, transpile, and execute WATE code instantly with rich diagnostics and live AST inspection.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Top Header Bar -->
+  <header>
+    <div class="brand">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <h1>WATE Playground</h1>
+      </div>
+      <span class="badge">v10.0 Online</span>
+    </div>
+
+    <div class="toolbar">
+      <select id="exampleSelect" class="select-preset">
+        <option value="hello">🌟 Hello World & Primitives</option>
+        <option value="oop">🏛️ OOP & Interfaces</option>
+        <option value="guards">🛡️ Pattern Matching & Guards</option>
+        <option value="algorithms">⚡ Algorithms (Fibonacci & Quicksort)</option>
+        <option value="collections">📦 Lists, Strings & Tables</option>
+        <option value="async">⏳ Async, Timers & Promises</option>
+        <option value="assertions">🧪 Unit Tests & Assertions</option>
+      </select>
+
+      <button id="runBtn" class="btn btn-primary" title="Execute Code (Ctrl + Enter)">
+        <span>▶</span> Run Code
+      </button>
+
+      <button id="clearBtn" class="btn btn-ghost" title="Clear Console">
+        <span>🧹</span> Clear
+      </button>
+
+      <button id="shareBtn" class="btn btn-ghost" title="Copy Shareable Link">
+        <span>🔗</span> Share
+      </button>
+
+      <button id="downloadBtn" class="btn btn-ghost" title="Download .wate file">
+        <span>💾</span> Download
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Split Workspace -->
+  <main class="workspace">
+    <!-- Left Editor Pane -->
+    <section class="pane pane-editor">
+      <div class="pane-header">
+        <div class="pane-title">
+          <div class="pane-title-dot"></div>
+          <span>main.wate</span>
+        </div>
+        <div class="pane-actions">
+          <span style="font-size: 0.75rem; color: #64748b;">Press <kbd>Ctrl+Enter</kbd> to run</span>
+        </div>
+      </div>
+
+      <div class="editor-container">
+        <div id="lineNumbers" class="line-numbers">1</div>
+        <textarea id="codeEditor" class="code-textarea" spellcheck="false" placeholder="# Type your WATE code here..."></textarea>
+      </div>
+    </section>
+
+    <!-- Right Output & Diagnostics Pane -->
+    <section class="pane">
+      <div class="pane-header">
+        <div class="tabs">
+          <div class="tab active" data-tab="terminal">Terminal Output</div>
+          <div class="tab" data-tab="js">Transpiled JS</div>
+          <div class="tab" data-tab="ast">AST Inspector</div>
+          <div class="tab" data-tab="tokens">Tokens</div>
+        </div>
+        <div class="pane-actions">
+          <button id="copyOutputBtn" class="icon-btn" title="Copy Output">📋</button>
+        </div>
+      </div>
+
+      <!-- Tab 1: Terminal Output -->
+      <div id="terminalView" class="output-view">
+        <div id="terminalLogs" class="terminal-logs">
+          <div class="log-entry">
+            <span class="log-time">[Init]</span>
+            <span class="log-content" style="color:#06b6d4;">⚡ WATE Web Playground Engine loaded. Press "Run Code" or Ctrl+Enter to execute.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Transpiled JavaScript -->
+      <div id="jsView" class="output-view" style="display: none;">
+        <pre id="jsCode" class="code-view">// Transpiled JavaScript will appear here after execution</pre>
+      </div>
+
+      <!-- Tab 3: AST Inspector -->
+      <div id="astView" class="output-view" style="display: none;">
+        <pre id="astCode" class="code-view">// AST syntax tree will appear here</pre>
+      </div>
+
+      <!-- Tab 4: Tokens Stream -->
+      <div id="tokensView" class="output-view" style="display: none;">
+        <pre id="tokensCode" class="code-view">// Lexer tokens will appear here</pre>
+      </div>
+
+      <!-- Bottom Interactive REPL Prompt Bar -->
+      <div class="repl-bar">
+        <span class="repl-prompt-symbol">wate&gt;</span>
+        <input id="replInput" type="text" class="repl-input" placeholder="Quick evaluate: e.g. 5 * 25, math.sqrt(144), color.green('test')..." autocomplete="off" />
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Status Bar -->
+  <footer>
+    <div class="status-left">
+      <div class="status-item">
+        <div id="statusIndicator" class="status-indicator"></div>
+        <span id="statusText">Ready</span>
+      </div>
+      <div class="status-item">
+        <span>⏱ <span id="execTime">0ms</span></span>
+      </div>
+    </div>
+    <div class="status-right">
+      <div class="status-item">
+        <span id="cursorPos">Ln 1, Col 1</span>
+      </div>
+      <div class="status-item">
+        <span>UTF-8</span>
+      </div>
+      <div class="status-item">
+        <span>WATE Core AST v10.0</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="../wate-parser.js"></script>
+  <script src="wate-web.js"></script>
+  <script>
+    // Presets catalog
+    const PRESETS = {
+      hello: `# =============================================
+# 🌟 Welcome to WATE Programming Language!
+# =============================================
+
+set greeting = "Assalam-o-Alaikum, WATE World!"
+set version = 10.0
+set author = "WazemTech"
+
+out(color.cyan(greeting))
+out(f"🚀 Running WATE Engine v{version} by {author}")
+
+# Arithmetic and standard math
+set radius = 7
+set area = math.pi * math.pow(radius, 2)
+out(f"Circle Area with radius {radius}: {math.round(area * 100) / 100}")
+
+# Color formatted output
+out(color.green("✅ Environment verified & operational."))
+`,
+
+      oop: `# =============================================
+# 🏛️ OOP: Classes, Inheritance & Interfaces
+# =============================================
+
+interface Printable {
+    method printDetails;
+}
+
+class Entity {
+    #id;
+    constructor(id) {
+        set this.#id = id;
+    }
+    get id() {
+        return this.#id;
+    }
+}
+
+class User extends Entity implements Printable {
+    #username;
+    #role;
+
+    constructor(id, username, role) {
+        super(id);
+        set this.#username = username;
+        set this.#role = role;
+    }
+
+    fn printDetails() {
+        out(color.cyan(f"👤 [ID #{this.id}] User: {this.#username} | Role: {this.#role}"));
+    }
+}
+
+set admin = User(101, "waseem_akram", "Administrator")
+admin.printDetails()
+
+set developer = User(102, "dev_coder", "Lead Engineer")
+developer.printDetails()
+`,
+
+      guards: `# =============================================
+# 🛡️ Pattern Matching & Guard Clauses
+# =============================================
+
+fn evaluateScore(score) {
+    guard (score >= 0 and score <= 100) else {
+        out(color.red(f"❌ Invalid score: {score}"))
+        return "Invalid"
+    }
+
+    if (score >= 90) {
+        return "Grade A+ (Excellent)"
+    } elseif (score >= 80) {
+        return "Grade A (Very Good)"
+    } elseif (score >= 70) {
+        return "Grade B (Good)"
+    } else {
+        return "Grade C (Keep Practicing)"
+    }
+}
+
+set scores = [95, 82, 68, 105, -5]
+foreach (s in scores) {
+    set res = evaluateScore(s)
+    out(f"Score {s} => {color.yellow(res)}")
+}
+`,
+
+      algorithms: `# =============================================
+# ⚡ Algorithms: Fibonacci & QuickSort
+# =============================================
+
+# 1. Recursive Fibonacci with Memoization
+fn fib(n) {
+    if (n <= 1) { return n; }
+    return fib(n - 1) + fib(n - 2);
+}
+
+out(color.cyan("--- Fibonacci Sequence ---"))
+repeat (10 times) {
+    set val = fib(it)
+    out(f"fib({it}) = {val}")
+}
+
+# 2. Functional Quicksort
+fn quicksort(arr) {
+    if (list.length(arr) <= 1) { return arr; }
+    set pivot = arr[0]
+    set less = list.filter(list.slice(arr, 1), fn(x) { return x <= pivot; })
+    set greater = list.filter(list.slice(arr, 1), fn(x) { return x > pivot; })
+    return [...quicksort(less), pivot, ...quicksort(greater)]
+}
+
+set unsorted = [64, 34, 25, 12, 22, 11, 90]
+out(f"\nUnsorted: {json.stringify(unsorted)}")
+set sorted = quicksort(unsorted)
+out(color.green(f"Sorted:   {json.stringify(sorted)}"))
+`,
+
+      collections: `# =============================================
+# 📦 Lists, String Operations & Dates
+# =============================================
+
+# String manipulation
+set text = "  WATE language is fast and modern  "
+out(f"Original: '{text}'")
+out(f"Trimmed:  '{str.trim(text)}'")
+out(f"Upper:    '{str.upper(str.trim(text))}'")
+
+# List pipeline
+set numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+set evens = list.filter(numbers, fn(n) { return n % 2 == 0; })
+set squares = list.map(evens, fn(n) { return n * n; })
+
+out(f"Evens:   {json.stringify(evens)}")
+out(f"Squares: {json.stringify(squares)}")
+
+# Date utilities
+out(f"\nCurrent Date: {date.today()} {date.time()}")
+out(f"Unix Timestamp: {date.stamp()}")
+`,
+
+      async: `# =============================================
+# ⏳ Async / Await & Timers
+# =============================================
+
+async fn simulateNetworkTask(taskId, delayMs) {
+    out(f"⏳ Task {taskId} started...")
+    await timer.sleep(delayMs)
+    out(color.green(f"✅ Task {taskId} completed after {delayMs}ms"))
+    return f"Result of Task {taskId}"
+}
+
+out(color.cyan("Starting asynchronous tasks..."))
+set res1 = await simulateNetworkTask("A", 300)
+set res2 = await simulateNetworkTask("B", 200)
+
+out(color.yellow("All async tasks finished successfully!"))
+`,
+
+      assertions: `# =============================================
+# 🧪 Built-in Unit Test Assertions
+# =============================================
+
+fn add(a, b) { return a + b; }
+fn multiply(a, b) { return a * b; }
+
+out(color.cyan("Running Test Suite...\n"))
+
+assert.equal(add(10, 20), 30, "add(10, 20) should equal 30")
+assert.equal(multiply(5, 5), 25, "multiply(5, 5) should equal 25")
+assert.isTrue(str.contains("wate", "wat"), "str contains query check")
+assert.isFalse(5 > 10, "5 > 10 must be false")
+
+assert.summary()
+`
+    };
+
+    // DOM Elements
+    const codeEditor = document.getElementById('codeEditor');
+    const lineNumbers = document.getElementById('lineNumbers');
+    const exampleSelect = document.getElementById('exampleSelect');
+    const runBtn = document.getElementById('runBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const terminalLogs = document.getElementById('terminalLogs');
+    const terminalView = document.getElementById('terminalView');
+    const jsView = document.getElementById('jsView');
+    const jsCode = document.getElementById('jsCode');
+    const astView = document.getElementById('astView');
+    const astCode = document.getElementById('astCode');
+    const tokensView = document.getElementById('tokensView');
+    const tokensCode = document.getElementById('tokensCode');
+    const replInput = document.getElementById('replInput');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const statusText = document.getElementById('statusText');
+    const execTime = document.getElementById('execTime');
+    const cursorPos = document.getElementById('cursorPos');
+    const copyOutputBtn = document.getElementById('copyOutputBtn');
+    const tabs = document.querySelectorAll('.tab');
+
+    // Update Line Numbers
+    function updateLineNumbers() {
+      const lines = codeEditor.value.split('\n').length;
+      let lineHtml = '';
+      for (let i = 1; i <= lines; i++) {
+        lineHtml += i + '<br>';
+      }
+      lineNumbers.innerHTML = lineHtml;
+    }
+
+    // Cursor position tracker
+    function updateCursorPos() {
+      const pos = codeEditor.selectionStart;
+      const text = codeEditor.value.substring(0, pos);
+      const lines = text.split('\n');
+      const ln = lines.length;
+      const col = lines[lines.length - 1].length + 1;
+      cursorPos.textContent = `Ln ${ln}, Col ${col}`;
+    }
+
+    codeEditor.addEventListener('input', () => {
+      updateLineNumbers();
+      updateCursorPos();
+    });
+
+    codeEditor.addEventListener('click', updateCursorPos);
+    codeEditor.addEventListener('keyup', updateCursorPos);
+
+    codeEditor.addEventListener('scroll', () => {
+      lineNumbers.scrollTop = codeEditor.scrollTop;
+    });
+
+    // Tab key indentation support
+    codeEditor.addEventListener('keydown', (e) => {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = codeEditor.selectionStart;
+        const end = codeEditor.selectionEnd;
+        codeEditor.value = codeEditor.value.substring(0, start) + '    ' + codeEditor.value.substring(end);
+        codeEditor.selectionStart = codeEditor.selectionEnd = start + 4;
+        updateLineNumbers();
+      } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        runCode();
+      }
+    });
+
+    // Tab switcher
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        const target = tab.getAttribute('data-tab');
+        terminalView.style.display = target === 'terminal' ? 'block' : 'none';
+        jsView.style.display = target === 'js' ? 'block' : 'none';
+        astView.style.display = target === 'ast' ? 'block' : 'none';
+        tokensView.style.display = target === 'tokens' ? 'block' : 'none';
+      });
+    });
+
+    // Preset selector
+    exampleSelect.addEventListener('change', () => {
+      const key = exampleSelect.value;
+      if (PRESETS[key]) {
+        codeEditor.value = PRESETS[key];
+        updateLineNumbers();
+        updateCursorPos();
+      }
+    });
+
+    // Append log to terminal
+    function appendLog(item) {
+      const row = document.createElement('div');
+      row.className = `log-entry ${item.type || 'stdout'}`;
+      row.innerHTML = `
+        <span class="log-time">[${item.timestamp || new Date().toLocaleTimeString()}]</span>
+        <span class="log-content">${item.html || item.text}</span>
+      `;
+      terminalLogs.appendChild(row);
+      terminalView.scrollTop = terminalView.scrollHeight;
+    }
+
+    // Run Code Action
+    async function runCode() {
+      const source = codeEditor.value;
+      statusIndicator.className = 'status-indicator busy';
+      statusText.textContent = 'Running...';
+      runBtn.disabled = true;
+
+      appendLog({
+        type: 'stdout',
+        text: '--- Running main.wate ---',
+        html: '<span style="color:#64748b;font-style:italic;">--- Running main.wate ---</span>'
+      });
+
+      // Update AST, Tokens and JS views asynchronously
+      try {
+        if (window.WateParser) {
+          const tokens = window.WateParser.tokenizeWate(source, 'playground.wate');
+          tokensCode.textContent = JSON.stringify(tokens, null, 2);
+
+          const ast = window.WateParser.parseWate(source, 'playground.wate');
+          astCode.textContent = JSON.stringify(ast, null, 2);
+
+          const js = window.WateParser.generateJS(ast);
+          jsCode.textContent = js;
+        }
+      } catch(e) {
+        // Syntax errors handled by runner below
+      }
+
+      const outcome = await WateWeb.run(source, (item) => {
+        appendLog(item);
+      });
+
+      execTime.textContent = `${outcome.duration}ms`;
+      statusIndicator.className = 'status-indicator';
+      statusText.textContent = outcome.success ? 'Ready' : 'Error';
+      runBtn.disabled = false;
+    }
+
+    runBtn.addEventListener('click', runCode);
+
+    // Clear Terminal
+    clearBtn.addEventListener('click', () => {
+      terminalLogs.innerHTML = '';
+      appendLog({
+        type: 'stdout',
+        text: 'Terminal cleared.',
+        html: '<span style="color:#64748b;">Terminal cleared.</span>'
+      });
+    });
+
+    // Copy Output
+    copyOutputBtn.addEventListener('click', () => {
+      const activeTab = document.querySelector('.tab.active').getAttribute('data-tab');
+      let text = '';
+      if (activeTab === 'terminal') text = terminalLogs.innerText;
+      else if (activeTab === 'js') text = jsCode.innerText;
+      else if (activeTab === 'ast') text = astCode.innerText;
+      else if (activeTab === 'tokens') text = tokensCode.innerText;
+
+      navigator.clipboard.writeText(text).then(() => {
+        copyOutputBtn.textContent = '✅';
+        setTimeout(() => copyOutputBtn.textContent = '📋', 1500);
+      });
+    });
+
+    // Share link with hash encoding
+    shareBtn.addEventListener('click', () => {
+      const code = codeEditor.value;
+      const encoded = encodeURIComponent(btoa(unescape(encodeURIComponent(code))));
+      const shareUrl = window.location.origin + window.location.pathname + '#code=' + encoded;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        shareBtn.innerHTML = '<span>✅</span> Copied!';
+        setTimeout(() => shareBtn.innerHTML = '<span>🔗</span> Share', 2000);
+      });
+    });
+
+    // Download .wate file
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([codeEditor.value], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'script.wate';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Interactive REPL bar execution
+    replInput.addEventListener('keydown', async (e) => {
+      if (e.key === 'Enter') {
+        const line = replInput.value.trim();
+        if (!line) return;
+        replInput.value = '';
+
+        appendLog({
+          type: 'stdout',
+          text: `wate> ${line}`,
+          html: `<span style="color:#06b6d4;font-weight:bold;">wate&gt;</span> <span style="color:#f8fafc;">${line}</span>`
+        });
+
+        // Evaluate single line
+        const snippet = `out(${line});`;
+        const res = await WateWeb.run(snippet, (item) => appendLog(item));
+        if (!res.success) {
+          // If out(...) failed, try raw statement
+          await WateWeb.run(line, (item) => appendLog(item));
+        }
+      }
+    });
+
+    // Initialize from URL hash or default preset
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.location.hash.startsWith('#code=')) {
+        try {
+          const encoded = window.location.hash.substring(6);
+          const decoded = decodeURIComponent(escape(atob(decodeURIComponent(encoded))));
+          codeEditor.value = decoded;
+        } catch (e) {
+          codeEditor.value = PRESETS.hello;
+        }
+      } else {
+        codeEditor.value = PRESETS.hello;
+      }
+      updateLineNumbers();
+      updateCursorPos();
+    });
+  </script>
+</body>
+</html>

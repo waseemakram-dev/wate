@@ -1,5 +1,31 @@
 {
+  "name": "wate-lang",
+  "version": "10.0.0",
+  "description": "High-Performance Full-Stack Programming Language with Register VM, JIT, and Native Enterprise Ecosystem",
+  "main": "wate.js",
+  "bin": {
+    "wate": "./wate.js",
+    "wpm": "./wpm.js"
+  },
+  "scripts": {
+    "test": "node wate.js test -A",
+    "coverage": "node wate.js test --coverage -A",
+    "bench": "node wate.js bench tests/25_phase5_tooling.wate -A",
+    "playground": "node wate.js playground",
+    "doc": "node wate.js doc --serve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/waseemakram-dev/wate.git"
+  },
+  "author": "Waseem Akram <waseemakram.dev@gmail.com>",
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.16.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.0"
   }
 }

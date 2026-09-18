@@ -9,5 +9,7 @@ test.wate
 test_web.wate
 test_shake.wate
 tmp_*
+registry_storage/
+dist/
 wate_packages/
 *.vsix

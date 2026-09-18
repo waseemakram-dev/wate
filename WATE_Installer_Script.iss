@@ -19,7 +19,7 @@ ChangesEnvironment=yes
 Source: "wate.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "wpm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "wate.ico"; DestDir: "{app}"; Flags: ignoreversion
-Source: "wate-vscode\wate-lang-1.1.2.vsix"; DestDir: "{app}"; Flags: ignoreversion
+Source: "wate-vscode\wate-lang-2.1.0.vsix"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
 ; 1. Register .wate extension
@@ -30,10 +30,10 @@ Root: HKCR; Subkey: "Wate.Script\shell\open\command"; ValueType: string; ValueNa
 
 [Run]
 ; 2. Auto-install VS Code, Cursor, Windsurf, and Antigravity extensions (silently)
-Filename: "cmd.exe"; Parameters: "/c code --install-extension ""{app}\wate-lang-1.1.2.vsix"" --force"; Flags: runhidden; StatusMsg: "Configuring VS Code..."
-Filename: "cmd.exe"; Parameters: "/c cursor --install-extension ""{app}\wate-lang-1.1.2.vsix"" --force"; Flags: runhidden; StatusMsg: "Configuring Cursor IDE..."
-Filename: "cmd.exe"; Parameters: "/c windsurf --install-extension ""{app}\wate-lang-1.1.2.vsix"" --force"; Flags: runhidden; StatusMsg: "Configuring Windsurf IDE..."
-Filename: "cmd.exe"; Parameters: "/c antigravity --install-extension ""{app}\wate-lang-1.1.2.vsix"" --force"; Flags: runhidden; StatusMsg: "Configuring Antigravity IDE..."
+Filename: "cmd.exe"; Parameters: "/c code --install-extension ""{app}\wate-lang-2.1.0.vsix"" --force"; Flags: runhidden; StatusMsg: "Configuring VS Code..."
+Filename: "cmd.exe"; Parameters: "/c cursor --install-extension ""{app}\wate-lang-2.1.0.vsix"" --force"; Flags: runhidden; StatusMsg: "Configuring Cursor IDE..."
+Filename: "cmd.exe"; Parameters: "/c windsurf --install-extension ""{app}\wate-lang-2.1.0.vsix"" --force"; Flags: runhidden; StatusMsg: "Configuring Windsurf IDE..."
+Filename: "cmd.exe"; Parameters: "/c antigravity --install-extension ""{app}\wate-lang-2.1.0.vsix"" --force"; Flags: runhidden; StatusMsg: "Configuring Antigravity IDE..."
 
 [Code]
 // 3. Add to System PATH

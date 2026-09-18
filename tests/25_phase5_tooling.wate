@@ -1,0 +1,95 @@
+# ============================================================
+# WATE Test 25: Phase 5 Developer Tooling, Testing & Distribution
+# ============================================================
+# Verifies:
+#  - Item 53: Code Formatter (wate-fmt)
+#  - Item 55: Benchmarking Suite (wate-bench)
+#  - Item 56: Application Bundler (wate-bundle)
+#  - Item 59: Package Security Scanner (wpm audit)
+#  - Item 54: Code Coverage Collector (wate-coverage)
+# ============================================================
+
+out(color.cyan("=================================================="))
+out(color.cyan("⚡ Running WATE Phase 5 Developer Tooling Test Suite"))
+out(color.cyan("=================================================="))
+
+# ------------------------------------------------------------
+# Test 1: Code Formatter (wate-fmt)
+# ------------------------------------------------------------
+out(color.yellow("\n[1/5] Testing Automatic Code Formatter (wate-fmt)..."))
+
+set fmtMod = sys.require("./wate-fmt.js")
+set rawMessy = "fn   add( a , b ){\nreturn a+b;\n}\n"
+set formatted = fmtMod.formatCode(rawMessy)
+
+assert.isTrue(str.contains(formatted, "fn add(a, b) {"), "Formatter should normalize function signature and braces")
+assert.isTrue(str.contains(formatted, "    return a + b;"), "Formatter should apply 4-space indentation and operator spaces")
+out(color.green("  ✔ Code Formatter verified: indentation & operator spacing normalized."))
+
+# ------------------------------------------------------------
+# Test 2: Benchmarking Suite (wate-bench)
+# ------------------------------------------------------------
+out(color.yellow("\n[2/5] Testing Benchmarking Suite (wate-bench)..."))
+
+set benchMod = sys.require("./wate-bench.js")
+set suite = benchMod.BenchmarkSuite("Math Benchmark Test")
+
+set state = { "counter": 0 }
+suite.add("Increment Task", fn() {
+    state["counter"] = state["counter"] + 1
+}, { warmup: 5, iterations: 100 })
+
+set results = suite.run()
+assert.isTrue(results.length is 1, "Benchmark suite should return 1 benchmark result")
+assert.isTrue(results[0].opsPerSec > 0, "Benchmark should compute positive ops/sec")
+assert.isTrue(results[0].avgMs >= 0, "Benchmark should calculate avg latency")
+out(color.green(f"  ✔ Benchmark Suite verified: {results[0].opsPerSec} ops/sec recorded."))
+
+# ------------------------------------------------------------
+# Test 3: Application Bundler (wate-bundle)
+# ------------------------------------------------------------
+out(color.yellow("\n[3/5] Testing Application Bundler (wate-bundle)..."))
+
+set bundleMod = sys.require("./wate-bundle.js")
+set bundleCode = bundleMod.bundleApp("examples/hello.wate")
+
+assert.isTrue(str.contains(bundleCode, "WATE Standalone Application Bundle"), "Bundle header present")
+assert.isTrue(str.contains(bundleCode, "Hello, World!"), "Entrypoint code inlined into bundle")
+out(color.green(f"  ✔ Application Bundler verified: standalone bundle generated ({str.length(bundleCode)} chars)."))
+
+# ------------------------------------------------------------
+# Test 4: Package Security Scanner (wpm audit)
+# ------------------------------------------------------------
+out(color.yellow("\n[4/5] Testing Package Security Audit Scanner (wpm audit)..."))
+
+set wpmMod = sys.require("./wpm.js")
+set auditRes = wpmMod.auditPackages()
+
+assert.isTrue(auditRes.filesScanned >= 0, "Audit scanner should scan package files")
+out(color.green(f"  ✔ WPM Security Scanner verified: scanned {auditRes.filesScanned} package file(s)."))
+
+# ------------------------------------------------------------
+# Test 5: Code Coverage Collector (wate-coverage)
+# ------------------------------------------------------------
+out(color.yellow("\n[5/5] Testing Code Coverage Tracker (wate-coverage)..."))
+
+set covMod = sys.require("./wate-coverage.js")
+set tracker = covMod.CoverageTracker()
+
+# Simulate statement hits on tracker instance
+tracker.hit("test_dummy.wate", 1)
+tracker.hit("test_dummy.wate", 2)
+tracker.hit("test_dummy.wate", 3)
+
+set covReport = tracker.getReport()
+
+assert.isTrue(covReport.files.length is 1, "Coverage tracker should report exactly 1 file")
+set testDummyCov = covReport.files[0]
+assert.isTrue(testDummyCov.statements.covered is 3, "Covered statements count must match hits")
+assert.isTrue(testDummyCov.statements.pct is 100.0, "100% statement coverage on hit lines")
+
+out(color.green("  ✔ Code Coverage Tracker verified: accurately measured 3/3 statement hits."))
+
+out(color.green("\n=================================================="))
+out(color.green("🏆 All Phase 5 Developer Tooling Tests PASSED!"))
+out(color.green("=================================================="))

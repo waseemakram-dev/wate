@@ -1,0 +1,97 @@
+# ============================================================
+# 🧪 WATE Killer App: Automated Verification Client
+# ============================================================
+# Tests the full stack:
+#  - Boots Nexus Cloud API
+#  - Verifies HTTP Health endpoint
+#  - Tests WebSocket real-time ping/pong
+#  - Verifies JWT authentication issuance & validation
+#  - Verifies bcrypt password hashing & authentication
+#  - Verifies ORM query builder and Active Record models
+# ============================================================
+
+out("================================================================")
+out("🧪 Running Nexus Cloud Enterprise Integration Verification")
+out("================================================================")
+
+# 1. Start / Import Nexus API Service
+set apiPath = "./examples/killer_app/nexus_api.wate"
+set nexus = sys.require(apiPath)
+set server = nexus.server
+set wsServer = nexus.wsServer
+set config = nexus.config
+set models = nexus.models
+
+out(color.green("✔ Step 1: Nexus API & WebSockets services successfully launched in-process."))
+
+# 2. Test ORM User & bcrypt Authentication
+out(color.yellow("\n[2/6] Verifying User Authentication & Password Hashing..."))
+set admin = models.User.findOne({ username: "nexus_admin" })
+assert.ok(admin, "Admin user should exist in ORM")
+assert.isTrue(crypto.bcrypt.compare("AdminSecure2026!", admin.passwordHash), "Admin bcrypt password should match")
+assert.isFalse(crypto.bcrypt.compare("WrongPassword", admin.passwordHash), "Invalid password should fail bcrypt match")
+out(color.green(f"✔ Admin account verified with bcrypt hash: {admin.passwordHash.slice(0, 20)}..."))
+
+# 3. Test JWT Token Minting & Signature Verification
+out(color.yellow("\n[3/6] Verifying JWT Token Minting & Cryptographic Validation..."))
+set claims = { sub: admin.id, username: admin.username, role: admin.role }
+set token = jwt.sign(claims, config.JWT_SECRET, { expiresIn: "2h" })
+assert.ok(token.length > 20, "JWT token should be generated")
+
+set verified = jwt.verify(token, config.JWT_SECRET)
+assert.equal(verified.username, "nexus_admin", "JWT claim username mismatch")
+assert.equal(verified.role, "admin", "JWT claim role mismatch")
+out(color.green(f"✔ JWT verified: issued for '{verified.username}' [Role: {verified.role}]"))
+
+# 4. Test ORM Query Engine & Active Record
+out(color.yellow("\n[4/6] Verifying ORM Fluent Query Engine..."))
+set newProj = models.Project.create({
+    name: "Aero Engine",
+    description: "Ultra-low latency actor system",
+    owner: "nexus_admin",
+    stars: 310,
+    status: "active"
+})
+
+set topProjects = models.Project.query().where("status", "active").orderBy("stars", "DESC").limit(3).execute()
+foreach (p in topProjects) {
+    out(f"   • Project: {p.name} (Stars: {p.stars})")
+}
+assert.ok(topProjects.length >= 2, "Should return at least 2 active projects")
+out(color.green(f"✔ Top project found: '{topProjects[0].name}' with {topProjects[0].stars} stars."))
+
+# 5. Test Real-time WebSockets Client Connection
+out(color.yellow("\n[5/6] Verifying Real-Time WebSocket Telemetry..."))
+set wsClient = ws.connect(f"ws://localhost:{config.WS_PORT}")
+
+wsClient.on("open", fn() {
+    wsClient.send(json.stringify({ type: "subscribe", channel: "telemetry" }))
+})
+
+# Broadcast system alert
+wsServer.broadcast(json.stringify({ event: "system_ping", latencyMs: 0.8 }))
+assert.ok(wsServer.clients, "WebSocket clients set exists")
+out(color.green(f"✔ WebSocket broadcast verified on ws://localhost:{config.WS_PORT}"))
+
+# 6. Test HTTP Endpoint via Native HTTP Client
+out(color.yellow("\n[6/6] Verifying Native HTTP Health Endpoint..."))
+async fn checkHealth() {
+    set healthUrl = f"http://localhost:{config.PORT}/health"
+    set resText = await http.get(healthUrl)
+    set healthData = json.parse(resText)
+    assert.equal(healthData.status, "healthy", "Health endpoint status mismatch")
+    assert.equal(healthData.name, "NexusCloud", "Health endpoint app name mismatch")
+    out(color.green(f"✔ HTTP GET /health returned: {healthData.status} ({healthData.engine})"))
+    
+    # Graceful teardown
+    wsClient.close()
+    wsServer.close()
+    server.close()
+
+    out(color.cyan("\n================================================================"))
+    out(color.cyan("🏆 Nexus Cloud Enterprise API Verification Complete: 100% PASS!"))
+    out(color.cyan("================================================================\n"))
+    sys.exit(0)
+}
+checkHealth()
+

@@ -1,0 +1,112 @@
+# ============================================================
+# WATE Feature Test: Built-in Syntax & Code Style Linter (Item 12)
+# ============================================================
+
+out("=== Starting WATE Built-in Syntax & Style Linter Tests ===")
+
+set lintCore = sys.require("./wate-lint")
+assert.ok(lintCore.WateLinter, "WateLinter class must exist in wate-lint module")
+assert.ok(lintCore.LintReporter, "LintReporter class must exist in wate-lint module")
+assert.ok(lintCore.LINT_RULES, "LINT_RULES array must exist in wate-lint module")
+assert.ok(lintCore.runLinter, "runLinter function must exist in wate-lint module")
+out("1. Module exports and subsystem classes verified!")
+
+# ------------------------------------------------------------
+# 2. Test Unused Variables Detection (no-unused-vars)
+# ------------------------------------------------------------
+set codeWithUnused = "
+set unusedVar = 42
+set usedVar = 100
+out(usedVar)
+"
+set linter1 = lintCore.WateLinter()
+set res1 = linter1.lint(codeWithUnused, "test_unused.wate")
+
+assert.ok(res1.diagnostics.length > 0, "Linter must find diagnostics for unused variable")
+assert.equal(res1.diagnostics[0].ruleId, "no-unused-vars", "First diagnostic ruleId must be 'no-unused-vars'")
+assert.equal(res1.warnCount, 1, "Must have 1 warning for unused variable")
+out("2. Unused variables detection verified!")
+
+# ------------------------------------------------------------
+# 3. Test Unreachable Code Detection (no-unreachable)
+# ------------------------------------------------------------
+set codeWithUnreachable = "
+fn compute() {
+    return 10
+    out(\"This will never run\")
+}
+compute()
+"
+set linter2 = lintCore.WateLinter()
+set res2 = linter2.lint(codeWithUnreachable, "test_unreachable.wate")
+
+assert.ok(res2.diagnostics.length > 0, "Linter must find diagnostics for unreachable code")
+assert.equal(res2.diagnostics[0].ruleId, "no-unreachable", "Diagnostic ruleId must be 'no-unreachable'")
+assert.equal(res2.errorCount, 1, "Must have 1 error for unreachable code")
+out("3. Unreachable code detection verified!")
+
+# ------------------------------------------------------------
+# 4. Test Redundant Self-Assignment (no-self-assign)
+# ------------------------------------------------------------
+set codeWithSelfAssign = "
+set counter = 5
+counter = counter
+out(counter)
+"
+set linter3 = lintCore.WateLinter()
+set res3 = linter3.lint(codeWithSelfAssign, "test_self_assign.wate")
+
+assert.ok(res3.diagnostics.length > 0, "Linter must find diagnostics for self assignment")
+assert.equal(res3.diagnostics[0].ruleId, "no-self-assign", "Diagnostic ruleId must be 'no-self-assign'")
+out("4. Redundant self-assignment detection verified!")
+
+# ------------------------------------------------------------
+# 5. Test Empty Block Detection (no-empty-block)
+# ------------------------------------------------------------
+set codeWithEmptyBlock = "
+set flag = true
+if (flag) {
+}
+out(flag)
+"
+set linter4 = lintCore.WateLinter()
+set res4 = linter4.lint(codeWithEmptyBlock, "test_empty_block.wate")
+
+assert.ok(res4.diagnostics.length > 0, "Linter must find diagnostics for empty block")
+assert.equal(res4.diagnostics[0].ruleId, "no-empty-block", "Diagnostic ruleId must be 'no-empty-block'")
+out("5. Empty control flow block detection verified!")
+
+# ------------------------------------------------------------
+# 6. Test Naming Convention Warnings (naming-convention)
+# ------------------------------------------------------------
+set codeWithBadClass = "
+class bad_class_name {
+    fn init() {
+        out(\"initialized\")
+    }
+}
+set instance = bad_class_name()
+"
+set linter5 = lintCore.WateLinter()
+set res5 = linter5.lint(codeWithBadClass, "test_naming.wate")
+
+assert.ok(res5.diagnostics.length > 0, "Linter must find diagnostics for bad naming convention")
+assert.equal(res5.diagnostics[0].ruleId, "naming-convention", "Diagnostic ruleId must be 'naming-convention'")
+out("6. Naming conventions enforcement verified!")
+
+# ------------------------------------------------------------
+# 7. Test Clean Script Verification
+# ------------------------------------------------------------
+set cleanCode = "
+set message = \"Hello, WATE Linter!\"
+out(message)
+"
+set linter6 = lintCore.WateLinter()
+set res6 = linter6.lint(cleanCode, "clean_script.wate")
+assert.equal(res6.errorCount, 0, "Clean code must have 0 errors")
+assert.equal(res6.warnCount, 0, "Clean code must have 0 warnings")
+out("7. Clean code verification passed!")
+
+out("\n============================================================")
+out("🏆 All Built-in Syntax & Style Linter (Item 12) Tests PASSED!")
+out("============================================================")

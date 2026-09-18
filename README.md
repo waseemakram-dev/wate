@@ -188,6 +188,7 @@ wpm remove web         # Uninstall a module
 ## 📁 Examples Folder & Code Snippets
 
 For hands-on coding, explore the **[examples](./examples)** directory where you'll find ready-to-run configurations:
+- 🏢 [Enterprise Ecosystem Showcase (Phase 4)](./examples/enterprise.wate)
 - 🌐 [HTTP Server Example](./examples/server.wate)
 - 💾 [SQLite Query Operations](./examples/database.wate)
 - 🤖 [Web Scraper Automation](./examples/automation.wate)
@@ -242,16 +243,22 @@ set check = every("5s", fn() {
 
 | Goal Status | Title | Description |
 |:---:|:---|:---|
-| 🟢 **Stablized** | AST Engine & Lexer | Custom recursive descent syntax compilation. |
-| 🟢 **Stablized** | Bytecode VM Interpreter | Sandboxed low-overhead execution shell. |
-| 🟢 **Stablized** | Caret Error Pointer | Visual highlighting of syntax errors with exact column diagnostics. |
-| 🟢 **Stablized** | WPM package system | 12 built-in enterprise driver modules pre-packaged. |
-| 🟢 **Stablized** | Extension Snippets v2.0.0| 20+ ready templates with VS Code syntax configuration. |
-| 🟢 **Stablized** | Auto Test Runner | Integrated `wate test` suite runner with clean summaries. |
-| 🟡 **In-Development** | WATE Web Playground | Run WATE code directly inside any web browser. |
-| 🟡 **In-Development** | Public package registry | Community-submitted modules hosting library. |
-| 🔵 **Future Planned**| WASM compiler output | Native WebAssembly compiling pipeline. |
-| 🔵 **Future Planned**| VS Code Visual Debugger | Live interactive break-points debugging panel. |
+| 🟢 **Stabilized** | AST Engine & Lexer | Custom recursive descent syntax compilation. |
+| 🟢 **Stabilized** | Bytecode VM Interpreter | Sandboxed low-overhead execution shell with register VM option. |
+| 🟢 **Stabilized** | Caret Error Pointer | Visual highlighting of syntax errors with exact column diagnostics. |
+| 🟢 **Stabilized** | WPM Package System | Dependency manager with offline fallbacks and integrity hashing. |
+| 🟢 **Stabilized** | Extension Snippets v2.1.0| Syntax configuration and DAP integration for VS Code & Cursor. |
+| 🟢 **Stabilized** | Auto Test Runner & Coverage | Test suite runner with statement & branch code coverage (`wate test --coverage`). |
+| 🟢 **Stabilized** | Syntax Linter (`wate lint`) | Code style, unused variable & dead code analysis with rich diagnostics. |
+| 🟢 **Stabilized** | Code Formatter (`wate fmt`) | Go-style automatic source code formatter with `--check` and `--write`. |
+| 🟢 **Stabilized** | Benchmarking Suite (`wate bench`) | High-precision micro-benchmark runner with ops/sec and latency percentiles. |
+| 🟢 **Stabilized** | Application Bundler (`wate bundle`) | Single-file application & package dependency bundler. |
+| 🟢 **Stabilized** | Native Compiler (`wate compile --exe`) | Compiles WATE scripts into standalone 64-bit native `.exe` binaries. |
+| 🟢 **Stabilized** | Package Security Auditor (`wpm audit`) | Vulnerability scanner detecting dangerous permissions and unsafe patterns. |
+| 🟢 **Stabilized** | Cloud Registry (`wpm publish`) | Centralized package publishing with SHA-256 checksums. |
+| 🟢 **Stabilized** | Interactive CLI Debugger & DAP | Breakpoints, step-over, step-into, inspect (`wate debug`, `wate --dap`). |
+| 🟢 **Stabilized** | Automated Docs Server (`wate doc`) | Live markdown/HTML docs generator with built-in HTTP server (`--serve`). |
+| 🟢 **Stabilized** | WATE Web Playground | Browser-based execution sandbox with shareable cloud URL hashes. |
 
 ---
 

@@ -1,0 +1,302 @@
+# ============================================================
+# Phase 3: Advanced Language Features & Syntax (Items 25 to 36)
+# ============================================================
+
+out("================================================================")
+out("🧪 WATE Phase 3: Advanced Language Features & Syntax Test Suite")
+out("================================================================")
+
+# ------------------------------------------------------------
+# 1. Generics / Templates: Generic Classes and Functions
+# ------------------------------------------------------------
+out("\n1. Testing Generics & Templates...")
+class Box<T> {
+    fn init(val: T) {
+        set this.val = val
+    }
+    fn get(): T {
+        return this.val
+    }
+}
+
+fn identity<T>(x: T): T {
+    return x
+}
+
+set strBox = Box("WATE 2026")
+set numBox = Box(999)
+assert.equal(strBox.get(), "WATE 2026", "Generic class Box<string> value mismatch")
+assert.equal(numBox.get(), 999, "Generic class Box<number> value mismatch")
+assert.equal(identity("Antigravity"), "Antigravity", "Generic function identity<string> mismatch")
+assert.equal(identity(42), 42, "Generic function identity<number> mismatch")
+out("   ✓ Generics / Templates verified successfully!")
+
+# ------------------------------------------------------------
+# 2. Decorators & Annotations: Class & Method Wrappers
+# ------------------------------------------------------------
+out("\n2. Testing Decorators & Annotations...")
+@route("/api/v1/service")
+class ServiceController {
+    @readonly
+    fn endpoint() {
+        return "service endpoint response"
+    }
+
+    @log
+    fn add(a, b) {
+        return a + b
+    }
+}
+
+set controller = ServiceController()
+assert.equal(controller.endpoint(), "service endpoint response", "Decorated method call failed")
+assert.equal(controller.add(10, 20), 30, "Decorated method @log calculation mismatch")
+assert.equal(ServiceController.route, "/api/v1/service", "Class decorator @route failed to attach metadata")
+out("   ✓ Decorators & Annotations verified successfully!")
+
+# ------------------------------------------------------------
+# 3. Destructuring Assignment: Arrays & Objects
+# ------------------------------------------------------------
+out("\n3. Testing Destructuring Assignment...")
+set [firstItem, secondItem, ...tailItems] = [100, 200, 300, 400]
+assert.equal(firstItem, 100, "Array destructuring first element mismatch")
+assert.equal(secondItem, 200, "Array destructuring second element mismatch")
+assert.equal(tailItems.length, 2, "Array destructuring rest tail length mismatch")
+assert.equal(tailItems[0], 300, "Array destructuring rest element 0 mismatch")
+assert.equal(tailItems[1], 400, "Array destructuring rest element 1 mismatch")
+
+set { userName, userAge, ...userMeta } = { userName: "Waseem", userAge: 25, role: "Author", country: "Pakistan" }
+assert.equal(userName, "Waseem", "Object destructuring userName mismatch")
+assert.equal(userAge, 25, "Object destructuring userAge mismatch")
+assert.equal(userMeta.role, "Author", "Object destructuring rest role mismatch")
+assert.equal(userMeta.country, "Pakistan", "Object destructuring rest country mismatch")
+out("   ✓ Destructuring Assignment verified successfully!")
+
+# ------------------------------------------------------------
+# 4. Optional Chaining: Safe Property Access (?.)
+# ------------------------------------------------------------
+out("\n4. Testing Optional Chaining (?.)...")
+set account = { profile: { name: "Akram" } }
+set emptyAccount = null
+
+assert.equal(account?.profile?.name, "Akram", "Optional chaining on present nested property failed")
+assert.equal(emptyAccount?.profile?.name, undefined, "Optional chaining on null target should return undefined")
+assert.equal(emptyAccount?.orders?.[0], undefined, "Optional indexed access on null should return undefined")
+assert.equal(emptyAccount?.getDetails?.(), undefined, "Optional method call on null should return undefined")
+out("   ✓ Optional Chaining verified successfully!")
+
+# ------------------------------------------------------------
+# 5. Nullish Coalescing: Operator (??) and Assignment (??=)
+# ------------------------------------------------------------
+out("\n5. Testing Nullish Coalescing (?? & ??=)...")
+set givenInput = null
+set fallbackName = givenInput ?? "Guest User"
+assert.equal(fallbackName, "Guest User", "Nullish coalescing with null failed")
+
+set emptyStr = ""
+set preservedStr = emptyStr ?? "Should not pick this"
+assert.equal(preservedStr, "", "Nullish coalescing should preserve empty string")
+
+set unassignedVar = null
+unassignedVar ??= 1234
+assert.equal(unassignedVar, 1234, "Nullish assignment ??= failed on null")
+
+unassignedVar ??= 9999
+assert.equal(unassignedVar, 1234, "Nullish assignment ??= should not overwrite non-null value")
+out("   ✓ Nullish Coalescing verified successfully!")
+
+# ------------------------------------------------------------
+# 6. Generators & Yield: Lazy Iterative Evaluation (fn* & yield)
+# ------------------------------------------------------------
+out("\n6. Testing Generators & Yield...")
+fn* stepGenerator() {
+    yield 10
+    yield 20
+    yield 30
+}
+
+fn* delegatingGen() {
+    yield 5
+    yield* stepGenerator()
+    yield 35
+}
+
+set genIter = delegatingGen()
+assert.equal(genIter.next().value, 5, "Generator first yield mismatch")
+assert.equal(genIter.next().value, 10, "Generator delegated yield 1 mismatch")
+assert.equal(genIter.next().value, 20, "Generator delegated yield 2 mismatch")
+assert.equal(genIter.next().value, 30, "Generator delegated yield 3 mismatch")
+assert.equal(genIter.next().value, 35, "Generator final yield mismatch")
+assert.equal(genIter.next().done, true, "Generator iteration should be done")
+out("   ✓ Generators & Yield verified successfully!")
+
+# ------------------------------------------------------------
+# 7. Custom Iterators: __iter__ Metamethod in for...in / foreach
+# ------------------------------------------------------------
+out("\n7. Testing Custom Iterators (__iter__)...")
+class NumberRange {
+    fn init(startVal, endVal) {
+        set this.startVal = startVal
+        set this.endVal = endVal
+    }
+
+    fn* __iter__() {
+        set current = this.startVal
+        while (current <= this.endVal) {
+            yield current
+            current += 1
+        }
+    }
+}
+
+set collectedRange = []
+set myRange = NumberRange(1, 4)
+foreach (n in myRange) {
+    list.push(collectedRange, n)
+}
+assert.equal(collectedRange.length, 4, "Custom iterator range collected length mismatch")
+assert.equal(collectedRange[0], 1, "Custom iterator first item mismatch")
+assert.equal(collectedRange[3], 4, "Custom iterator last item mismatch")
+out("   ✓ Custom Iterators verified successfully!")
+
+# ------------------------------------------------------------
+# 8. Enums & Sum Types: Explicit Enumeration Types
+# ------------------------------------------------------------
+out("\n8. Testing Enums & Sum Types...")
+enum UserStatus {
+    Active,
+    Pending,
+    Banned
+}
+
+enum HttpStatus {
+    Ok = 200,
+    NotFound = 404,
+    ServerError = 500
+}
+
+assert.equal(UserStatus.Active, 0, "Enum default numeric value 0 mismatch")
+assert.equal(UserStatus.Pending, 1, "Enum default numeric value 1 mismatch")
+assert.equal(UserStatus.Banned, 2, "Enum default numeric value 2 mismatch")
+assert.equal(UserStatus[0], "Active", "Enum bidirectional lookup from 0 to 'Active' failed")
+assert.equal(UserStatus[1], "Pending", "Enum bidirectional lookup from 1 to 'Pending' failed")
+
+assert.equal(HttpStatus.Ok, 200, "Enum explicit value 200 mismatch")
+assert.equal(HttpStatus.NotFound, 404, "Enum explicit value 404 mismatch")
+assert.equal(HttpStatus[404], "NotFound", "Enum bidirectional lookup from 404 failed")
+
+set userStatusKeys = UserStatus.keys()
+assert.equal(userStatusKeys.length, 3, "Enum keys count mismatch")
+assert.equal(userStatusKeys[0], "Active", "Enum keys first item mismatch")
+out("   ✓ Enums & Sum Types verified successfully!")
+
+# ------------------------------------------------------------
+# 9. Type Aliases: Compile-Time Type Definitions
+# ------------------------------------------------------------
+out("\n9. Testing Type Aliases...")
+type UserID = number
+type StringList = list
+type ResultCallback = fn
+
+set myUserId: UserID = 778899
+assert.equal(myUserId, 778899, "Type aliased variable value mismatch")
+out("   ✓ Type Aliases verified successfully!")
+
+# ------------------------------------------------------------
+# 10. Spread / Rest Operators: Arrays, Objects & Functions
+# ------------------------------------------------------------
+out("\n10. Testing Spread / Rest Operators...")
+fn sumAllNumbers(...numbers) {
+    set total = 0
+    foreach (num in numbers) {
+        total += num
+    }
+    return total
+}
+
+set originalList = [2, 3, 4]
+set expandedList = [1, ...originalList, 5]
+assert.equal(expandedList.length, 5, "Array spread length mismatch")
+assert.equal(expandedList[0], 1, "Array spread element 0 mismatch")
+assert.equal(expandedList[1], 2, "Array spread element 1 mismatch")
+assert.equal(expandedList[4], 5, "Array spread element 4 mismatch")
+
+set baseConfig = { host: "localhost", port: 8080 }
+set extendedConfig = { ...baseConfig, secure: true, port: 8443 }
+assert.equal(extendedConfig.host, "localhost", "Object spread host mismatch")
+assert.equal(extendedConfig.port, 8443, "Object spread port overwrite mismatch")
+assert.equal(extendedConfig.secure, true, "Object spread additional field mismatch")
+
+set computedSum = sumAllNumbers(...expandedList)
+assert.equal(computedSum, 15, "Spread arguments in function call mismatch")
+out("   ✓ Spread / Rest Operators verified successfully!")
+
+# ------------------------------------------------------------
+# 11. First-class Error Types: Throw & Catch Custom Errors
+# ------------------------------------------------------------
+out("\n11. Testing First-class Error Types...")
+class ValidationError extends Error {
+    fn init(customMsg) {
+        set this.name = "ValidationError"
+        set this.message = customMsg
+    }
+}
+
+set caughtCustom = false
+set errorTypeMatch = false
+set caughtMessage = ""
+
+try {
+    throw ValidationError("Invalid authorization credentials")
+} catch (err) {
+    caughtCustom = true
+    caughtMessage = err.message
+    if (err is ValidationError) {
+        errorTypeMatch = true
+    }
+}
+
+assert.isTrue(caughtCustom, "Custom exception should be caught in try-catch")
+assert.isTrue(errorTypeMatch, "'err is ValidationError' type check failed")
+assert.equal(caughtMessage, "Invalid authorization credentials", "Custom exception message mismatch")
+out("   ✓ First-class Error Types verified successfully!")
+
+# ------------------------------------------------------------
+# 12. Async Generators & Streams: Native Streaming Support
+# ------------------------------------------------------------
+out("\n12. Testing Async Generators & Streams...")
+async fn* asyncDataStream() {
+    yield "Chunk #1"
+    yield "Chunk #2"
+    yield "Chunk #3"
+}
+
+async fn runAsyncStreamsTest() {
+    set chunks = []
+    for await (set item in asyncDataStream()) {
+        list.push(chunks, item)
+    }
+    assert.equal(chunks.length, 3, "for await async generator iteration length mismatch")
+    assert.equal(chunks[0], "Chunk #1", "for await chunk 0 mismatch")
+    assert.equal(chunks[2], "Chunk #3", "for await chunk 2 mismatch")
+
+    set foreachChunks = []
+    foreach await (chunk in asyncDataStream()) {
+        list.push(foreachChunks, chunk)
+    }
+    assert.equal(foreachChunks.length, 3, "foreach await iteration length mismatch")
+
+    # Standard stream utility methods
+    set streamSource = stream.fromArray([10, 20, 30])
+    set collected = await stream.collect(streamSource)
+    assert.equal(collected.length, 3, "stream.collect length mismatch")
+    assert.equal(collected[0], 10, "stream.collect item 0 mismatch")
+    assert.equal(collected[2], 30, "stream.collect item 2 mismatch")
+
+    out("   ✓ Async Generators & Streams verified successfully!")
+    out("\n================================================================")
+    out("🏆 All 12 Phase 3 Advanced Syntax Features PASSED!")
+    out("================================================================")
+}
+
+runAsyncStreamsTest()
