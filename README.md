@@ -88,7 +88,7 @@ graph TD
 ## ⚙️ Installation Guide
 
 ### Option 1: Automatic Installer (Windows - Highly Recommended)
-1. Download `WATE_Setup_v1.0.0.exe` from the latest **[GitHub Releases](https://github.com/waseem3423/wate/releases)** page.
+1. Download `WATE_Setup_v1.0.0.exe` from the latest **[GitHub Releases](https://github.com/waseemakram-dev/wate/releases)** page.
 2. Run the installer. It will:
    - Configure paths in your system environment variable `PATH`.
    - Setup global executable aliases for `wate` and `wpm`.
@@ -105,7 +105,7 @@ If you wish to compile the binaries manually from source code:
 1. Ensure Node.js (v18+) is installed.
 2. Clone the repository and install global packaging requirements:
    ```bash
-   git clone https://github.com/waseem3423/wate.git
+   git clone https://github.com/waseemakram-dev/wate.git
    cd wate
    npm install -g pkg
    ```
